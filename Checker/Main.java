@@ -40,6 +40,7 @@ public class Main extends Application {
                         resetTiles();
                         board[tile.coo_x][tile.coo_y].piece = clickedPiece;
                         turn = 0;
+                        printBoard();
                     }
                 });
                 tiles.getChildren().add(tile);
@@ -73,6 +74,7 @@ public class Main extends Application {
         primaryStage.show();
         // Stage stage = new Stage();
         // stage.show();
+        printBoard();
     }
 
     public static void resetTiles() {
@@ -116,21 +118,22 @@ public class Main extends Application {
         ArrayList<Coordinate> moves = new ArrayList<Coordinate>();
         try {
             if (!jumpedBefore) {
-
-                if (x + piece.type.moveDir >= 0 && x + piece.type.moveDir <= 7
-                        && board[x + piece.type.moveDir][y].piece == null) {
-                    moves.add(new Coordinate(x + piece.type.moveDir, y));
-                } else {
-                    moves.addAll(allPossibleMoves(board, piece, true, true, false, x + 2 * piece.type.moveDir, y));
+                if (x + piece.type.moveDir >= 0 && x + piece.type.moveDir <= 7) {
+                    if (board[x + piece.type.moveDir][y].piece == null) {
+                        moves.add(new Coordinate(x + piece.type.moveDir, y));
+                    } else {
+                        moves.addAll(allPossibleMoves(board, piece, true, true, false, x + 2 * piece.type.moveDir, y));
+                    }
                 }
-                if (y + piece.type.moveDir >= 0 && y + piece.type.moveDir <= 7
-                        && board[x][y + piece.type.moveDir].piece == null) {
-                    moves.add(new Coordinate(x, y + piece.type.moveDir));
-                } else {
-                    moves.addAll(allPossibleMoves(board, piece, true, false, true, x, y + 2 * piece.type.moveDir));
+                if (y + piece.type.moveDir >= 0 && y + piece.type.moveDir <= 7) {
+                    if (board[x][y + piece.type.moveDir].piece == null) {
+                        moves.add(new Coordinate(x, y + piece.type.moveDir));
+                    } else {
+                        moves.addAll(allPossibleMoves(board, piece, true, false, true, x, y + 2 * piece.type.moveDir));
+                    }
                 }
             } else {
-                if (x >= 0 && x <= board.length && y >= 0 && y <= board[0].length) {
+                if (x >= 0 && x <= 7 && y >= 0 && y <= 7) {
                     if (((jumpedX && board[x - piece.type.moveDir][y].piece != null)
                             || (jumpedY && board[x][y - piece.type.moveDir].piece != null))
                             && board[x][y].piece == null) {
@@ -184,12 +187,32 @@ public class Main extends Application {
         return -1;
     }
 
+    public static void printBoard() {
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board.length; j++) {
+                System.out.print("" + board[j][i].piece + "\t");
+                if (board[j][i].piece == null) {
+                    System.out.print("\t");
+
+                }
+            }
+            System.out.println();
+        }
+        System.out.println("==========================================");
+    }
+
     public static void main(String[] args) {
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             public void run() {
                 if (turn == 0) {
                     text.setText("AI THINKING");
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
                     agentTurn();
                 }
             }

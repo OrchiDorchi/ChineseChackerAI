@@ -21,17 +21,13 @@ public class Agent {
     public void makeMove() {
         HashMap<Piece, Coordinate> initialWhites = new HashMap<>();
         HashMap<Piece, Coordinate> initialBlacks = new HashMap<>();
-        HashMap<Piece, Coordinate> initialWhites2 = new HashMap<>();
-        HashMap<Piece, Coordinate> initialBlacks2 = new HashMap<>();
         for (Piece piece : allPieces(Main.board, PieceType.DARK)) {
             initialBlacks.put(piece, new Coordinate(piece.x, piece.y));
-            initialBlacks2.put(piece, new Coordinate(piece.x, piece.y));
         }
         for (Piece piece : allPieces(Main.board, PieceType.LIGHT)) {
             initialWhites.put(piece, new Coordinate(piece.x, piece.y));
-            initialWhites2.put(piece, new Coordinate(piece.x, piece.y));
         }
-        HashMap<String, Object> map = minimax(Main.board, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, true, null,
+        HashMap<String, Object> map = minimax(Main.board, 5, 5, Integer.MIN_VALUE, Integer.MAX_VALUE, true, null,
                 initialWhites, initialBlacks);
         try {
             Thread.sleep(200);
@@ -39,13 +35,13 @@ public class Agent {
             // TODO: handle exception
         }
         for (Piece piece : allPieces(Main.board, PieceType.DARK)) {
-            Coordinate c = initialBlacks2.get(piece);
+            Coordinate c = initialBlacks.get(piece);
             Main.board[piece.x][piece.y].piece = null;
             piece.move(c.x, c.y);
             Main.board[c.x][c.y].piece = piece;
         }
         for (Piece piece : allPieces(Main.board, PieceType.LIGHT)) {
-            Coordinate c = initialWhites2.get(piece);
+            Coordinate c = initialWhites.get(piece);
             Main.board[piece.x][piece.y].piece = null;
             piece.move(c.x, c.y);
             Main.board[c.x][c.y].piece = piece;
@@ -56,11 +52,10 @@ public class Agent {
         System.out.println(c);
         Main.board[piece.x][piece.y].changeType(TileType.PREV_MOVE);
         Main.board[piece.x][piece.y].piece = null;
-        piece.move(c.x, c.y);
         Main.board[c.x][c.y].piece = piece;
+        piece.move(c.x, c.y);
         Main.board[c.x][c.y].changeType(TileType.PREV_MOVE);
-        // Main.text.setText("zomzom");
-        // makeRandomMove();
+        Main.printBoard();
     }
 
     private int evaluateBoard(Tile[][] board) {
@@ -84,82 +79,85 @@ public class Agent {
                 score += 20;
             }
         }
-
-        int blackCountInRow = 0;
-        int blackCountInColumn = 0;
+        int blackCountInRow7 = 0;
+        int blackCountInColumn7 = 0;
+        int blackCountInRow6 = 0;
+        int blackCountInColumn6 = 0;
         for (int j = 0; j < 8; j++) {
             if (board[j][7].piece != null && board[j][7].piece.type == PieceType.DARK) {
-                blackCountInRow++;
+                blackCountInRow7++;
             }
             if (board[7][j].piece != null && board[7][j].piece.type == PieceType.DARK) {
-                blackCountInColumn++;
+                blackCountInColumn7++;
+            }
+            if (board[j][6].piece != null && board[j][6].piece.type == PieceType.DARK) {
+                blackCountInRow6++;
+            }
+            if (board[6][j].piece != null && board[6][j].piece.type == PieceType.DARK) {
+                blackCountInColumn6++;
             }
         }
-        if (blackCountInRow > 3) {
+        if ((blackCountInRow7 > 3) || (blackCountInColumn7 > 3) || (blackCountInRow7 == 3 && blackCountInRow6 > 3)
+                || (blackCountInColumn7 == 3 && blackCountInColumn6 > 3)) {
             score -= 50000;
         }
-        if (blackCountInColumn > 3) {
-            score -= 50000;
-        }
-
-        int whiteCountInRow = 0;
-        int whiteCountInColumn = 0;
-
+        int whiteCountInRow7 = 0;
+        int whiteCountInColumn7 = 0;
+        int whiteCountInRow6 = 0;
+        int whiteCountInColumn6 = 0;
         for (int j = 0; j < 8; j++) {
             if (board[j][7].piece != null && board[j][7].piece.type == PieceType.LIGHT) {
-                whiteCountInRow++;
+                whiteCountInRow7++;
             }
             if (board[7][j].piece != null && board[7][j].piece.type == PieceType.LIGHT) {
-                whiteCountInColumn++;
+                whiteCountInColumn7++;
+            }
+            if (board[j][6].piece != null && board[j][6].piece.type == PieceType.LIGHT) {
+                whiteCountInRow6++;
+            }
+            if (board[6][j].piece != null && board[6][j].piece.type == PieceType.LIGHT) {
+                whiteCountInColumn6++;
             }
         }
-        if (whiteCountInRow > 3) {
+        if ((whiteCountInRow7 > 3) || (whiteCountInColumn7 > 3) || (whiteCountInRow7 == 3 && whiteCountInRow6 > 3)
+                || (whiteCountInColumn7 == 3 && whiteCountInColumn6 > 3)) {
             score += 50000;
         }
-        if (whiteCountInColumn > 3) {
-            score += 50000;
-        }
-
         return score;
     }
 
-    private HashMap<String, Object> minimax(Tile[][] board, int depth, int alpha, int beta, boolean isMax,
+    private HashMap<String, Object> minimax(Tile[][] board, int max_depth, int depth, int alpha, int beta,
+            boolean isMax,
             Piece lastPiece,
             HashMap<Piece, Coordinate> initialWhites, HashMap<Piece, Coordinate> initialBlacks) {
         HashMap<String, Object> map = new HashMap<>();
         if (depth == 0 || Main.checkGameWinner(board) != -1) {
-            // System.out.println("+============O DEPTH");
-            // try {
-            // Thread.sleep(100);
-            // } catch (InterruptedException e) {
-            // // TODO Auto-generated catch block
-            // e.printStackTrace();
-            // }
-
             // System.out.println(ANSI_PURPLE + "PIECE: " + lastPiece + ANSI_RESET);
             int score = evaluateBoard(board);
-            System.out.println(ANSI_RED + "Score : " + score + ANSI_RESET);
+            // System.out.println(ANSI_RED + "Score : " + score + ANSI_RESET);
             map.put("score", score);
             map.put("piece", lastPiece);
             // for (Piece piece : allPieces(Main.board, PieceType.DARK)) {
             // Coordinate c = initialBlacks.get(piece);
             // piece.move(c.x, c.y);
             // }
-            for (Piece piece : allPieces(Main.board, PieceType.LIGHT)) {
-                Coordinate c = initialWhites.get(piece);
-                Main.board[piece.x][piece.y].piece = null;
-                piece.shadowMove(c.x, c.y);
-                Main.board[c.x][c.y].piece = piece;
+            if (max_depth % 2 == 0) {
+                for (Piece piece : allPieces(Main.board, PieceType.LIGHT)) {
+                    Coordinate c = initialWhites.get(piece);
+                    Main.board[piece.x][piece.y].piece = null;
+                    piece.shadowMove(c.x, c.y);
+                    Main.board[c.x][c.y].piece = piece;
+                }
+            } else {
+                for (Piece piece : allPieces(Main.board, PieceType.DARK)) {
+                    Coordinate c = initialBlacks.get(piece);
+                    Main.board[piece.x][piece.y].piece = null;
+                    piece.shadowMove(c.x, c.y);
+                    Main.board[c.x][c.y].piece = piece;
+                }
             }
-            // try {
-            // Thread.sleep(50);
-            // } catch (InterruptedException e) {
-            // // TODO Auto-generated catch block
-            // e.printStackTrace();
-            // }
             return map;
         }
-
         if (isMax) {
             int maxScore = Integer.MIN_VALUE;
             Piece bestPiece = null;
@@ -175,20 +173,15 @@ public class Agent {
                     // move.y + ANSI_RESET);
                     Main.board[black.x][black.y].piece = null;
                     black.shadowMove(move.x, move.y);
-                    // try {
-                    // Thread.sleep(50);
-                    // } catch (InterruptedException e) {
-                    // // TODO Auto-generated catch block
-                    // e.printStackTrace();
-                    // }
                     Main.board[move.x][move.y].piece = black;
 
-                    int score = (int) minimax(board, depth - 1, alpha, beta, false, black, white_copy, black_copy)
+                    int score = (int) minimax(board, max_depth, depth - 1, alpha, beta, false, black, white_copy,
+                            black_copy)
                             .get("score");
                     maxScore = Math.max(maxScore, score);
                     alpha = Math.max(alpha, score);
                     if (beta <= alpha) {
-                        System.out.println("Pruned");
+                        // System.out.println("Pruned");
                         break;
                     }
                     if (maxScore == score) {
@@ -202,6 +195,7 @@ public class Agent {
                     piece.shadowMove(c.x, c.y);
                     Main.board[c.x][c.y].piece = piece;
                 }
+
             }
             map.put("piece", bestPiece);
             map.put("moveCoordinate", bestMove);
@@ -222,31 +216,20 @@ public class Agent {
                     // move.y + ANSI_RESET);
                     Main.board[white.x][white.y].piece = null;
                     white.shadowMove(move.x, move.y);
-                    // try {
-                    // Thread.sleep(50);
-                    // } catch (InterruptedException e) {
-                    // // TODO Auto-generated catch block
-                    // e.printStackTrace();
-                    // }
                     Main.board[move.x][move.y].piece = white;
-                    int score = (int) minimax(board, depth - 1, alpha, beta, true, white, white_copy, black_copy)
+                    int score = (int) minimax(board, max_depth, depth - 1, alpha, beta, true, white, white_copy,
+                            black_copy)
                             .get("score");
                     minScore = Math.min(minScore, score);
                     beta = Math.min(beta, score);
                     if (beta <= alpha) {
-                        System.out.println("Pruned");
+                        // System.out.println("Pruned");
                         break;
                     }
                     if (minScore == score) {
                         bestMove = move;
                         bestPiece = white;
                     }
-                    // try {
-                    // Thread.sleep(20);
-                    // } catch (InterruptedException e) {
-                    // // TODO Auto-generated catch block
-                    // e.printStackTrace();
-                    // }
                 }
                 for (Piece piece : allPieces(Main.board, PieceType.LIGHT)) {
                     Coordinate c = white_copy.get(piece);
