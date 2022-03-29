@@ -1,5 +1,5 @@
 package Checker;
 
 public enum TileType {
-    LIGHT, DARK, MOVEABLE
+    LIGHT, DARK, MOVEABLE, PREV_MOVE
 }

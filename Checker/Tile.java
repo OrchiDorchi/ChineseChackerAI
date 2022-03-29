@@ -21,6 +21,9 @@ public class Tile extends Rectangle {
             case MOVEABLE:
                 setFill(Color.valueOf("#993333"));
                 break;
+            case PREV_MOVE:
+                setFill(Color.valueOf("#993333"));
+                break;
         }
     }
 
@@ -41,6 +44,9 @@ public class Tile extends Rectangle {
                 break;
             case MOVEABLE:
                 this.setFill(Color.valueOf("#993333"));
+                break;
+            case PREV_MOVE:
+                setFill(Color.valueOf("#993333"));
                 break;
         }
     }
