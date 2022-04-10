@@ -8,8 +8,6 @@ import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 public class Main extends Application {
@@ -18,7 +16,6 @@ public class Main extends Application {
     public static final int HEIGHT = 8;
     public static int turn = 1;
     public static Tile[][] board = new Tile[WIDTH][HEIGHT];
-    public static Text text;
     private Piece clickedPiece = null;
 
     @Override
@@ -40,7 +37,6 @@ public class Main extends Application {
                         resetTiles();
                         board[tile.coo_x][tile.coo_y].piece = clickedPiece;
                         turn = 0;
-                        printBoard();
                     }
                 });
                 tiles.getChildren().add(tile);
@@ -57,24 +53,20 @@ public class Main extends Application {
                 }
             }
         }
-
-        text = new Text();
-        text.setText("YOUR TURN");
-        text.setFont(Font.font("Verdana", 30));
-        text.setX(50);
-        text.setY((double) HEIGHT * TILE_SIZE + 40);
-        root.getChildren().addAll(tiles, pieces, text);
-
+        root.getChildren().addAll(tiles, pieces);
         primaryStage.setWidth(WIDTH * TILE_SIZE);
-        primaryStage.setHeight(HEIGHT * TILE_SIZE + 200);
+        primaryStage.setHeight(HEIGHT * TILE_SIZE + 40);
         primaryStage.setResizable(false);
         primaryStage.setTitle("Checker");
         primaryStage.setScene(scene);
+
         primaryStage.show();
-        primaryStage.show();
-        // Stage stage = new Stage();
-        // stage.show();
-        printBoard();
+
+    }
+
+    @Override
+    public void stop() {
+        System.exit(0);
     }
 
     public static void resetTiles() {
@@ -107,7 +99,6 @@ public class Main extends Application {
             return;
         }
         new Agent().makeMove();
-        text.setText("YOUR TURN");
         turn = 1;
     }
 
@@ -161,11 +152,12 @@ public class Main extends Application {
                         throw new Exception("White didn't win");
                     }
                     if (i == 2 && j == 2) {
-                        System.out.println("White wins!!!!!!");
+                        // System.out.println("White wins!!!!!!");
                         return 1;
                     }
                 }
             } catch (Exception e) {
+                // piece is null or white didn't win
                 break;
             }
         }
@@ -175,30 +167,17 @@ public class Main extends Application {
                     if (board[i][j].piece.type != PieceType.DARK) {
                         throw new Exception("Black didn't win");
                     }
-                    if (i == 2 && j == 2) {
-                        System.out.println("Agent wins!!!!!!");
+                    if (i == 7 && j == 7) {
+                        // System.out.println("Agent wins!!!!!!");
                         return 0;
                     }
                 }
             } catch (Exception e) {
-                // TODO: handle exception
+                // piece is null or black didn't win
+                break;
             }
         }
         return -1;
-    }
-
-    public static void printBoard() {
-        for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board.length; j++) {
-                System.out.print("" + board[j][i].piece + "\t");
-                if (board[j][i].piece == null) {
-                    System.out.print("\t");
-
-                }
-            }
-            System.out.println();
-        }
-        System.out.println("==========================================");
     }
 
     public static void main(String[] args) {
@@ -206,7 +185,6 @@ public class Main extends Application {
         timer.schedule(new TimerTask() {
             public void run() {
                 if (turn == 0) {
-                    text.setText("AI THINKING");
                     try {
                         Thread.sleep(50);
                     } catch (InterruptedException e) {

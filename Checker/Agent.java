@@ -2,10 +2,7 @@ package Checker;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.stream.Collectors;
 
 public class Agent {
     public static final String ANSI_RESET = "\u001B[0m";
@@ -27,25 +24,15 @@ public class Agent {
         for (Piece piece : allPieces(Main.board, PieceType.LIGHT)) {
             initialWhites.put(piece, new Coordinate(piece.x, piece.y));
         }
-        HashMap<String, Object> map = minimax(Main.board, 5, 5, Integer.MIN_VALUE, Integer.MAX_VALUE, true, null,
+        HashMap<String, Object> map = minimax(3, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, true, null,
                 initialWhites, initialBlacks);
         try {
-            Thread.sleep(200);
+            Thread.sleep(100);
         } catch (Exception e) {
             // TODO: handle exception
         }
-        for (Piece piece : allPieces(Main.board, PieceType.DARK)) {
-            Coordinate c = initialBlacks.get(piece);
-            Main.board[piece.x][piece.y].piece = null;
-            piece.move(c.x, c.y);
-            Main.board[c.x][c.y].piece = piece;
-        }
-        for (Piece piece : allPieces(Main.board, PieceType.LIGHT)) {
-            Coordinate c = initialWhites.get(piece);
-            Main.board[piece.x][piece.y].piece = null;
-            piece.move(c.x, c.y);
-            Main.board[c.x][c.y].piece = piece;
-        }
+        moveBack(initialBlacks, PieceType.DARK);
+        moveBack(initialWhites, PieceType.LIGHT);
         Piece piece = (Piece) map.get("piece");
         Coordinate c = (Coordinate) map.get("moveCoordinate");
         System.out.println(piece);
@@ -55,7 +42,15 @@ public class Agent {
         Main.board[c.x][c.y].piece = piece;
         piece.move(c.x, c.y);
         Main.board[c.x][c.y].changeType(TileType.PREV_MOVE);
-        Main.printBoard();
+    }
+
+    private void moveBack(HashMap<Piece, Coordinate> positions, PieceType type) {
+        for (Piece piece : allPieces(Main.board, type)) {
+            Coordinate c = positions.get(piece);
+            Main.board[piece.x][piece.y].piece = null;
+            piece.shadowMove(c.x, c.y);
+            Main.board[c.x][c.y].piece = piece;
+        }
     }
 
     private int evaluateBoard(Tile[][] board) {
@@ -66,18 +61,18 @@ public class Agent {
             score += 5000;
         }
         for (Piece white : allPieces(board, PieceType.LIGHT)) {
-            score -= 8 - white.x;
-            score -= 8 - white.y;
             if (white.x < 3 && white.y < 3) {
-                score -= 20;
+                score -= 1;
             }
+            score -= (7 - white.x);
+            score -= (7 - white.y);
         }
         for (Piece black : allPieces(board, PieceType.DARK)) {
+            if (black.x > 4 && black.y > 4) {
+                score += 2;
+            }
             score += black.x;
             score += black.y;
-            if (black.x > 4 && black.y > 4) {
-                score += 20;
-            }
         }
         int blackCountInRow7 = 0;
         int blackCountInColumn7 = 0;
@@ -99,41 +94,45 @@ public class Agent {
         }
         if ((blackCountInRow7 > 3) || (blackCountInColumn7 > 3) || (blackCountInRow7 == 3 && blackCountInRow6 > 3)
                 || (blackCountInColumn7 == 3 && blackCountInColumn6 > 3)) {
-            score -= 50000;
+            score -= 5000;
         }
-        int whiteCountInRow7 = 0;
-        int whiteCountInColumn7 = 0;
-        int whiteCountInRow6 = 0;
-        int whiteCountInColumn6 = 0;
+        int whiteCountInRow0 = 0;
+        int whiteCountInColumn0 = 0;
+        int whiteCountInRow1 = 0;
+        int whiteCountInColumn1 = 0;
         for (int j = 0; j < 8; j++) {
-            if (board[j][7].piece != null && board[j][7].piece.type == PieceType.LIGHT) {
-                whiteCountInRow7++;
+            if (board[j][0].piece != null && board[j][0].piece.type == PieceType.LIGHT) {
+                whiteCountInRow0++;
             }
-            if (board[7][j].piece != null && board[7][j].piece.type == PieceType.LIGHT) {
-                whiteCountInColumn7++;
+            if (board[0][j].piece != null && board[0][j].piece.type == PieceType.LIGHT) {
+                whiteCountInColumn0++;
             }
-            if (board[j][6].piece != null && board[j][6].piece.type == PieceType.LIGHT) {
-                whiteCountInRow6++;
+            if (board[j][1].piece != null && board[j][1].piece.type == PieceType.LIGHT) {
+                whiteCountInRow1++;
             }
-            if (board[6][j].piece != null && board[6][j].piece.type == PieceType.LIGHT) {
-                whiteCountInColumn6++;
+            if (board[1][j].piece != null && board[1][j].piece.type == PieceType.LIGHT) {
+                whiteCountInColumn1++;
             }
         }
-        if ((whiteCountInRow7 > 3) || (whiteCountInColumn7 > 3) || (whiteCountInRow7 == 3 && whiteCountInRow6 > 3)
-                || (whiteCountInColumn7 == 3 && whiteCountInColumn6 > 3)) {
-            score += 50000;
+        if ((whiteCountInRow0 > 3) || (whiteCountInColumn0 > 3) || (whiteCountInRow0 == 3 && whiteCountInRow1 > 3)
+                || (whiteCountInColumn0 == 3 && whiteCountInColumn1 > 3)) {
+            score += 5000;
         }
         return score;
     }
 
-    private HashMap<String, Object> minimax(Tile[][] board, int max_depth, int depth, int alpha, int beta,
+    private HashMap<String, Object> minimax(int max_depth,
+            int depth,
+            int alpha,
+            int beta,
             boolean isMax,
             Piece lastPiece,
-            HashMap<Piece, Coordinate> initialWhites, HashMap<Piece, Coordinate> initialBlacks) {
+            HashMap<Piece, Coordinate> initialWhites,
+            HashMap<Piece, Coordinate> initialBlacks) {
         HashMap<String, Object> map = new HashMap<>();
-        if (depth == 0 || Main.checkGameWinner(board) != -1) {
+        if (depth == 0 || Main.checkGameWinner(Main.board) != -1) {
             // System.out.println(ANSI_PURPLE + "PIECE: " + lastPiece + ANSI_RESET);
-            int score = evaluateBoard(board);
+            int score = evaluateBoard(Main.board);
             // System.out.println(ANSI_RED + "Score : " + score + ANSI_RESET);
             map.put("score", score);
             map.put("piece", lastPiece);
@@ -142,19 +141,9 @@ public class Agent {
             // piece.move(c.x, c.y);
             // }
             if (max_depth % 2 == 0) {
-                for (Piece piece : allPieces(Main.board, PieceType.LIGHT)) {
-                    Coordinate c = initialWhites.get(piece);
-                    Main.board[piece.x][piece.y].piece = null;
-                    piece.shadowMove(c.x, c.y);
-                    Main.board[c.x][c.y].piece = piece;
-                }
+                moveBack(initialWhites, PieceType.LIGHT);
             } else {
-                for (Piece piece : allPieces(Main.board, PieceType.DARK)) {
-                    Coordinate c = initialBlacks.get(piece);
-                    Main.board[piece.x][piece.y].piece = null;
-                    piece.shadowMove(c.x, c.y);
-                    Main.board[c.x][c.y].piece = piece;
-                }
+                moveBack(initialBlacks, PieceType.DARK);
             }
             return map;
         }
@@ -162,20 +151,20 @@ public class Agent {
             int maxScore = Integer.MIN_VALUE;
             Piece bestPiece = null;
             Coordinate bestMove = null;
-            for (Piece black : allPieces(board, PieceType.DARK)) {
+            for (Piece black : allPieces(Main.board, PieceType.DARK)) {
                 HashMap<Piece, Coordinate> white_copy = copy(initialWhites);
                 HashMap<Piece, Coordinate> black_copy = copy(initialBlacks);
                 for (Piece piece : allPieces(Main.board, PieceType.DARK)) {
                     black_copy.put(piece, new Coordinate(piece.x, piece.y));
                 }
-                for (Coordinate move : Main.allPossibleMoves(board, black, false, false, false, black.x, black.y)) {
+                for (Coordinate move : Main.allPossibleMoves(Main.board, black, false, false, false, black.x,
+                        black.y)) {
                     // System.out.println(ANSI_BLUE + "Moving: " + black + " " + move.x + " " +
                     // move.y + ANSI_RESET);
                     Main.board[black.x][black.y].piece = null;
                     black.shadowMove(move.x, move.y);
                     Main.board[move.x][move.y].piece = black;
-
-                    int score = (int) minimax(board, max_depth, depth - 1, alpha, beta, false, black, white_copy,
+                    int score = (int) minimax(max_depth, depth - 1, alpha, beta, false, black, white_copy,
                             black_copy)
                             .get("score");
                     maxScore = Math.max(maxScore, score);
@@ -189,13 +178,7 @@ public class Agent {
                         bestPiece = black;
                     }
                 }
-                for (Piece piece : allPieces(Main.board, PieceType.DARK)) {
-                    Coordinate c = black_copy.get(piece);
-                    Main.board[piece.x][piece.y].piece = null;
-                    piece.shadowMove(c.x, c.y);
-                    Main.board[c.x][c.y].piece = piece;
-                }
-
+                moveBack(black_copy, PieceType.DARK);
             }
             map.put("piece", bestPiece);
             map.put("moveCoordinate", bestMove);
@@ -205,19 +188,20 @@ public class Agent {
             int minScore = Integer.MAX_VALUE;
             Piece bestPiece = null;
             Coordinate bestMove = null;
-            for (Piece white : allPieces(board, PieceType.LIGHT)) {
+            for (Piece white : allPieces(Main.board, PieceType.LIGHT)) {
                 HashMap<Piece, Coordinate> white_copy = copy(initialWhites);
                 HashMap<Piece, Coordinate> black_copy = copy(initialBlacks);
                 for (Piece piece : allPieces(Main.board, PieceType.LIGHT)) {
                     white_copy.put(piece, new Coordinate(piece.x, piece.y));
                 }
-                for (Coordinate move : Main.allPossibleMoves(board, white, false, false, false, white.x, white.y)) {
+                for (Coordinate move : Main.allPossibleMoves(Main.board, white, false, false, false, white.x,
+                        white.y)) {
                     // System.out.println(ANSI_RED + "Moving: " + white + " " + move.x + " " +
                     // move.y + ANSI_RESET);
                     Main.board[white.x][white.y].piece = null;
                     white.shadowMove(move.x, move.y);
                     Main.board[move.x][move.y].piece = white;
-                    int score = (int) minimax(board, max_depth, depth - 1, alpha, beta, true, white, white_copy,
+                    int score = (int) minimax(max_depth, depth - 1, alpha, beta, true, white, white_copy,
                             black_copy)
                             .get("score");
                     minScore = Math.min(minScore, score);
@@ -231,12 +215,7 @@ public class Agent {
                         bestPiece = white;
                     }
                 }
-                for (Piece piece : allPieces(Main.board, PieceType.LIGHT)) {
-                    Coordinate c = white_copy.get(piece);
-                    Main.board[piece.x][piece.y].piece = null;
-                    piece.shadowMove(c.x, c.y);
-                    Main.board[c.x][c.y].piece = piece;
-                }
+                moveBack(white_copy, PieceType.LIGHT);
             }
             map.put("piece", bestPiece);
             map.put("moveCoordinate", bestMove);
